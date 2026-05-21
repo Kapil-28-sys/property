@@ -7,147 +7,213 @@ export default function PropertiesHeroSection() {
   return (
     <>
       <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Jost:wght@300;400;500&display=swap');
+
+        .font-cormorant { font-family: 'Cormorant Garamond', serif; }
+        .font-jost      { font-family: 'Jost', sans-serif; }
+
         @keyframes fadeUp {
-          from {
-            opacity: 0;
-            transform: translateY(14px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
 
-        .fade-up {
-          animation: fadeUp 0.7s ease forwards;
+        .fade-up-1 { animation: fadeUp 0.6s ease 0.1s both; }
+        .fade-up-2 { animation: fadeUp 0.6s ease 0.25s both; }
+        .fade-up-3 { animation: fadeUp 0.6s ease 0.4s both; }
+        .fade-up-4 { animation: fadeUp 0.6s ease 0.55s both; }
+
+        .hero-bg {
+          background-image: url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070&auto=format&fit=crop');
+          background-size: cover;
+          background-position: center;
+          transform: scale(1.05);
+          transition: transform 8s ease;
+        }
+
+        .hero-btn-primary {
+          background: var(--primary);
+          color: var(--white);
+          box-shadow: var(--shadow-md);
+          border: none;
+          cursor: pointer;
+          font-family: 'Jost', sans-serif;
+          font-weight: 500;
+          font-size: 0.95rem;
+          letter-spacing: 0.03em;
+          padding: 14px 36px;
+          border-radius: 100px;
+          transition: var(--transition);
+        }
+        .hero-btn-primary:hover {
+          background: var(--primary-dark);
+          transform: translateY(-2px);
+          box-shadow: 0 18px 50px rgba(245,158,11,0.35);
+        }
+
+        .hero-btn-secondary {
+          background: rgba(255,255,255,0.7);
+          color: var(--secondary);
+          border: 1px solid var(--border);
+          cursor: pointer;
+          font-family: 'Jost', sans-serif;
+          font-weight: 500;
+          font-size: 0.95rem;
+          letter-spacing: 0.03em;
+          padding: 14px 36px;
+          border-radius: 100px;
+          backdrop-filter: blur(12px);
+          transition: var(--transition);
+        }
+        .hero-btn-secondary:hover {
+          background: var(--secondary);
+          color: var(--white);
+          border-color: var(--secondary);
+          transform: translateY(-2px);
+        }
+
+        .hero-stat-card {
+          background: rgba(255,255,255,0.75);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          backdrop-filter: blur(14px);
+          padding: 16px 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          box-shadow: var(--shadow-sm);
+        }
+
+        .hero-stat-value {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 2rem;
+          font-weight: 600;
+          line-height: 1;
+          color: var(--primary);
+        }
+
+        .hero-stat-label {
+          font-family: 'Jost', sans-serif;
+          font-size: 0.75rem;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--text-light);
         }
       `}</style>
 
       <section
-        className="relative w-full h-[92vh] overflow-hidden"
-        style={{ background: "var(--background)" }}
+        className="relative w-full overflow-hidden"
+        style={{ height: "92vh", background: "var(--background)" }}
       >
-        {/* Background Image */}
+
+        {/* ===== BACKGROUND IMAGE ===== */}
+        <div className="absolute inset-0 hero-bg" />
+
+        {/* ===== OVERLAYS ===== */}
+        <div className="absolute inset-0" style={{ background: "rgba(248,250,252,0.45)" }} />
         <div
-          className="absolute inset-0 bg-cover bg-center scale-105"
+          className="absolute inset-0"
           style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070&auto=format&fit=crop')",
+            background:
+              "linear-gradient(105deg, rgba(248,250,252,0.97) 0%, rgba(248,250,252,0.75) 45%, rgba(248,250,252,0.3) 100%)",
           }}
         />
 
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-white/50" />
+        {/* ===== SUBTLE GRID OVERLAY ===== */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, var(--border) 1px, transparent 1px), linear-gradient(to bottom, var(--border) 1px, transparent 1px)",
+            backgroundSize: "60px 60px",
+            opacity: 0.18,
+          }}
+        />
 
-        {/* Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/40 to-white/70" />
-
-        {/* Content */}
+        {/* ===== CONTENT ===== */}
         <div className="relative z-10 h-full flex items-center">
-          <div className="max-w-7xl mx-auto px-6 lg:px-12 w-full">
-            <motion.div
-              initial={{ opacity: 0, y: 35 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="max-w-4xl"
-            >
-              {/* Badge */}
+          <div
+            className="w-full px-6 lg:px-16"
+            style={{ maxWidth: "1200px", margin: "0 auto" }}
+          >
+
+            {/* ===== BADGE ===== */}
+            <div className="fade-up-1 inline-flex items-center gap-2 mb-8">
               <div
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-full backdrop-blur-md mb-7 fade-up"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-full font-jost"
                 style={{
                   border: "1px solid var(--border)",
-                  background: "rgba(255,255,255,0.75)",
+                  background: "rgba(255,255,255,0.8)",
                   color: "var(--secondary)",
                   boxShadow: "var(--shadow-sm)",
+                  fontSize: "0.78rem",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  backdropFilter: "blur(12px)",
                 }}
               >
-                <Building2 size={18} />
-                <span className="text-sm tracking-[2px] uppercase font-jost">
-                  Premium Properties Collection
-                </span>
+                <Building2 size={15} />
+                Premium Properties Collection
               </div>
+            </div>
 
-              {/* Heading */}
-              <h1
-                className="font-cormorant text-5xl md:text-7xl lg:text-8xl leading-[0.95] font-semibold fade-up"
-                style={{ color: "var(--text)" }}
+            {/* ===== HEADING ===== */}
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.85, ease: [0.25, 0.1, 0.25, 1] }}
+              className="font-cormorant fade-up-2"
+              style={{
+                fontSize: "clamp(3.2rem, 9vw, 7rem)",
+                fontWeight: 600,
+                lineHeight: 0.92,
+                color: "var(--text)",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              Discover
+              <span
+                className="block italic"
+                style={{ color: "var(--primary)" }}
               >
-                Discover
-                <span
-                  className="block"
-                  style={{ color: "var(--primary)" }}
-                >
-                  Luxury Living
-                </span>
-              </h1>
+                Luxury Living
+              </span>
+            </motion.h1>
 
-              {/* Description */}
-              <p
-                className="font-jost text-lg md:text-xl mt-8 max-w-2xl leading-relaxed fade-up"
-                style={{ color: "var(--text-light)" }}
-              >
-                Explore exceptional residences, premium apartments,
-                modern villas, and commercial spaces crafted for
-                elevated lifestyles and smart investments.
-              </p>
+            {/* ===== DESCRIPTION ===== */}
+            <p
+              className="font-jost fade-up-3"
+              style={{
+                fontSize: "1.05rem",
+                marginTop: "28px",
+                maxWidth: "520px",
+                lineHeight: 1.85,
+                color: "var(--text-light)",
+              }}
+            >
+              Explore exceptional residences, premium apartments, modern villas,
+              and commercial spaces crafted for elevated lifestyles and smart investments.
+            </p>
 
-              {/* Buttons */}
-              <div className="flex flex-wrap gap-5 mt-10 fade-up">
-                
-                {/* Primary Button */}
-                <button
-                  className="px-8 py-4 rounded-full font-medium font-jost transition-all duration-300 hover:scale-105"
-                  style={{
-                    background: "var(--primary)",
-                    color: "var(--white)",
-                    boxShadow: "var(--shadow-md)",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.background =
-                      "var(--primary-dark)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = "var(--primary)")
-                  }
-                >
-                  Explore Properties
-                </button>
+            {/* ===== BUTTONS ===== */}
+            <div className="flex flex-wrap gap-4 mt-10 fade-up-4">
+              <button className="hero-btn-primary">Explore Properties</button>
+              <button className="hero-btn-secondary">Contact Us</button>
+            </div>
 
-                {/* Secondary Button */}
-                <button
-                  className="px-8 py-4 rounded-full font-medium font-jost backdrop-blur-md transition-all duration-300 hover:scale-105"
-                  style={{
-                    border: "1px solid var(--border)",
-                    background: "rgba(255,255,255,0.75)",
-                    color: "var(--secondary)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background =
-                      "var(--secondary)";
-                    e.currentTarget.style.color = "var(--white)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background =
-                      "rgba(255,255,255,0.75)";
-                    e.currentTarget.style.color =
-                      "var(--secondary)";
-                  }}
-                >
-                  Contact Us
-                </button>
-              </div>
-            </motion.div>
+     
+
           </div>
         </div>
 
-        {/* Bottom Fade */}
+        {/* ===== BOTTOM FADE ===== */}
         <div
-          className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t to-transparent"
+          className="absolute bottom-0 left-0 w-full h-36 pointer-events-none"
           style={{
-            backgroundImage:
+            background:
               "linear-gradient(to top, var(--background), transparent)",
           }}
         />
+
       </section>
     </>
   );
