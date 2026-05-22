@@ -5,8 +5,6 @@ import { Loader2, CheckCircle2, AlertCircle, ImagePlus, X, MapPin, Home, User, F
 import { Country, State, City } from "country-state-city";
 import { createSellerProperty } from "../../servicesapi/sellerformapi";
 
-const IMGBB_API_KEY = "ed87bf3abfe5d5868938e481d8cfe42b";
-
 export default function SellerForm() {
 
   const [fields, setFields] = useState({
@@ -109,63 +107,38 @@ export default function SellerForm() {
     );
   };
 
-  /* ── Convert file to base64 string (without the data:... prefix) ── */
-  const toBase64 = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload  = () => {
-        // ImageBB wants pure base64, strip the "data:image/jpeg;base64," prefix
-        const base64 = reader.result.split(",")[1];
-        resolve(base64);
-      };
-      reader.onerror = () => reject(new Error(`Failed to read: ${file.name}`));
-      reader.readAsDataURL(file);
-    });
-
-  /* ── Upload images to ImageBB one by one ── */
-  const uploadImages = async () => {
+  /* ── Step 1: Upload images to /api/upload → get back full public URLs ── */
+  const uploadImagesToServer = async () => {
     if (imgs.length === 0) return [];
 
-    const urls = await Promise.all(
-      imgs.map(async (file) => {
-        const base64 = await toBase64(file);
+    const fd = new FormData();
+    imgs.forEach((file) => fd.append("images", file));
 
-        const fd = new FormData();
-        fd.append("key",   IMGBB_API_KEY);
-        fd.append("image", base64); // pure base64, no prefix
+    console.log("Uploading", imgs.length, "image(s) to /api/upload...");
 
-        const res = await fetch("https://api.imgbb.com/1/upload", {
-          method: "POST",
-          body:   fd,
-        });
+    const res = await fetch("/api/upload", { method: "POST", body: fd });
+    const json = await res.json().catch(() => ({}));
 
-        const text = await res.text(); // read as text first to avoid silent JSON parse failures
+    console.log("Upload response:", res.status, json);
 
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch {
-          throw new Error(`ImageBB bad response: ${text.slice(0, 200)}`);
-        }
+    if (!res.ok) {
+      throw new Error(json.error || `Image upload failed (${res.status})`);
+    }
 
-        if (!data.success) {
-          throw new Error(`ImageBB error: ${data.error?.message || JSON.stringify(data)}`);
-        }
-
-        return data.data.url; // short permanent HTTPS URL
-      })
-    );
-
-    return urls;
+    console.log("Image URLs received:", json.urls);
+    return json.urls; // full absolute URLs e.g. ["https://yourdomain.com/uploads/img.jpg"]
   };
 
-  /* ── Submit ── */
+  /* ── Step 2: Submit property with image URLs ── */
   const submit = async (e) => {
     e.preventDefault();
     setFormState({ loading: true, status: null, msg: "" });
 
     try {
-      const uploadedImageUrls = await uploadImages();
+      // STEP 1: Upload images, get absolute URLs
+      console.log("STEP 1: Uploading images...");
+      const imageUrls = await uploadImagesToServer();
+      console.log("STEP 1 DONE ✅ imageUrls:", imageUrls);
 
       const selectedStateName = states.find((s) => s.isoCode === selectedState)?.name || selectedState || "";
 
@@ -189,12 +162,13 @@ export default function SellerForm() {
         adminPrice:    0,
         finalPrice:    parseFloat(fields.price?.replace(/,/g, "") || 0),
         Active:        "Active",
-        image:         uploadedImageUrls, // short ImageBB URLs
+        image:         imageUrls, // public URLs like ["/uploads/1234_photo.jpg"]
       };
 
-      console.log("FINAL PAYLOAD:", payload);
+      console.log("STEP 2: Sending to API...", payload);
 
       const json = await createSellerProperty(payload);
+      console.log("STEP 2 DONE ✅", json);
 
       setFormState({
         loading: false,
@@ -352,7 +326,7 @@ export default function SellerForm() {
                   <ImagePlus size={28} color="#c8a45a" />
                   <strong style={{ marginTop: 8, color: "#1a1a2e" }}>Drop images here or click to browse</strong>
                   <span style={{ fontSize: 12, color: "#8e8fa8", marginTop: 4 }}>JPEG · PNG · WebP · Max 10 MB each</span>
-                  <span style={{ fontSize: 11, color: "#c8a45a", marginTop: 2 }}>Images hosted on ImageBB CDN</span>
+                  <span style={{ fontSize: 11, color: "#c8a45a", marginTop: 2 }}>Images sent directly to your API</span>
                 </label>
                 {imgs.length > 0 && (
                   <div style={S.previewGrid}>
@@ -381,7 +355,7 @@ export default function SellerForm() {
                 <button type="submit" disabled={formState.loading}
                   style={{ ...S.submitBtn, opacity: formState.loading ? 0.75 : 1, cursor: formState.loading ? "not-allowed" : "pointer", flex: 1 }}>
                   {formState.loading && <Loader2 size={18} style={{ animation: "spin .8s linear infinite" }} />}
-                  {formState.loading ? "Uploading & Submitting…" : "Publish Listing →"}
+                  {formState.loading ? "Uploading & Publishing…" : "Publish Listing →"}
                 </button>
               </div>
             </Section>
