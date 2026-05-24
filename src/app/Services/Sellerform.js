@@ -1,10 +1,147 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Loader2, CheckCircle2, AlertCircle, ImagePlus, X, MapPin, Home, User, FileText } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, ImagePlus, X, MapPin, Home, User, FileText, UserPlus } from "lucide-react";
 import { Country, State, City } from "country-state-city";
 import { createSellerProperty } from "../../servicesapi/sellerformapi";
+import { registerClient } from "../../servicesapi/userapi"; // ← imported here
 
+/* ══════════════════════════════════════════════
+   REGISTER MODAL
+══════════════════════════════════════════════ */
+function RegisterModal({ onSuccess }) {
+  const [fields, setFields] = useState({ name: "", email: "", mobileno: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const set = (key) => (e) => setFields((p) => ({ ...p, [key]: e.target.value }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      // ✅ Using registerClient from userapi.js — no hardcoded URL here
+      const json = await registerClient(fields);
+      if (!json.status) throw new Error(json.message || "Registration failed");
+      onSuccess(json);
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={M.overlay}>
+      <div style={M.modal}>
+        <div style={M.header}>
+          <div style={M.iconWrap}><UserPlus size={22} color="#c8a45a" /></div>
+          <div>
+            <h2 style={M.title}>Create Your Account</h2>
+            <p style={M.sub}>Register to list your property on our platform</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} style={M.form}>
+          <div style={M.field}>
+            <label style={M.label}>Full Name <span style={{ color: "#c8a45a" }}>*</span></label>
+            <input style={M.input} placeholder="John Doe" value={fields.name} onChange={set("name")} required />
+          </div>
+          <div style={M.field}>
+            <label style={M.label}>Email Address <span style={{ color: "#c8a45a" }}>*</span></label>
+            <input style={M.input} type="email" placeholder="john@email.com" value={fields.email} onChange={set("email")} required />
+          </div>
+          <div style={M.field}>
+            <label style={M.label}>Mobile Number <span style={{ color: "#c8a45a" }}>*</span></label>
+            <input style={M.input} placeholder="9876543210" value={fields.mobileno} onChange={set("mobileno")} required maxLength={10} />
+          </div>
+          <div style={M.field}>
+            <label style={M.label}>Password <span style={{ color: "#c8a45a" }}>*</span></label>
+            <input style={M.input} type="password" placeholder="Create a password" value={fields.password} onChange={set("password")} required minLength={6} />
+          </div>
+
+          {error && (
+            <div style={M.error}>
+              <AlertCircle size={15} />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <button type="submit" disabled={loading} style={{ ...M.btn, opacity: loading ? 0.75 : 1 }}>
+            {loading && <Loader2 size={16} style={{ animation: "spin .8s linear infinite" }} />}
+            {loading ? "Creating Account…" : "Register & Continue →"}
+          </button>
+
+          <p style={M.note}>
+            Your details are used to manage your listing. By registering, you agree to our terms.
+          </p>
+        </form>
+      </div>
+
+      <style>{`
+        @keyframes modalIn {
+          from { opacity: 0; transform: scale(0.93) translateY(20px); }
+          to   { opacity: 1; transform: scale(1)    translateY(0); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+const M = {
+  overlay: {
+    position: "fixed", inset: 0, background: "rgba(10,10,26,0.65)",
+    backdropFilter: "blur(6px)", zIndex: 1000,
+    display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+  },
+  modal: {
+    background: "#fff", borderRadius: 24, padding: "36px 32px 32px",
+    width: "100%", maxWidth: 440, boxShadow: "0 32px 80px rgba(0,0,0,0.25)",
+    border: "1px solid #e8e7e2", animation: "modalIn .35s cubic-bezier(.34,1.56,.64,1) both",
+  },
+  header: { display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 28 },
+  iconWrap: {
+    width: 48, height: 48, borderRadius: 14,
+    background: "rgba(200,164,90,0.1)", border: "1.5px solid rgba(200,164,90,0.25)",
+    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+  },
+  title: {
+    fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 700,
+    color: "#1a1a2e", letterSpacing: "-0.01em", lineHeight: 1.2,
+  },
+  sub: { color: "#8e8fa8", fontSize: 13, marginTop: 4 },
+  form: { display: "flex", flexDirection: "column", gap: 16 },
+  field: { display: "flex", flexDirection: "column", gap: 6 },
+  label: {
+    fontSize: 11, fontWeight: 600, letterSpacing: "0.08em",
+    textTransform: "uppercase", color: "#6b6c80",
+  },
+  input: {
+    height: 46, padding: "0 16px", border: "1.5px solid #e4e3de",
+    borderRadius: 12, background: "#faf9f7", fontSize: 14.5,
+    fontFamily: "'DM Sans', sans-serif", color: "#1a1a2e",
+    outline: "none", transition: "border-color .2s, box-shadow .2s",
+  },
+  error: {
+    display: "flex", alignItems: "center", gap: 8, padding: "10px 14px",
+    background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: 10,
+    color: "#be123c", fontSize: 13, fontWeight: 500,
+  },
+  btn: {
+    height: 50, border: "none", borderRadius: 14,
+    background: "linear-gradient(135deg, #b8862e, #c8a45a, #d4b06a)",
+    color: "#fff", fontSize: 14.5, fontWeight: 700,
+    fontFamily: "'DM Sans', sans-serif", cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+    boxShadow: "0 6px 24px rgba(200,164,90,0.4)", marginTop: 4,
+  },
+  note: { fontSize: 11.5, color: "#a0a1b5", textAlign: "center", lineHeight: 1.6 },
+};
+
+/* ══════════════════════════════════════════════
+   MAIN SELLER FORM
+══════════════════════════════════════════════ */
 export default function SellerForm() {
 
   const [fields, setFields] = useState({
@@ -14,8 +151,6 @@ export default function SellerForm() {
     bedrooms: "", bathrooms: "", areaSize: "",
     areaUnit: "", price: "", description: "",
   });
-
-  const set = (key) => (e) => setFields((prev) => ({ ...prev, [key]: e.target.value }));
 
   const [imgs, setImgs]         = useState([]);
   const [previews, setPreviews] = useState([]);
@@ -29,7 +164,12 @@ export default function SellerForm() {
   const [loadingLocation, setLoadingLocation] = useState(false);
 
   const [formState, setFormState] = useState({ loading: false, status: null, msg: "" });
-  const [activeSection, setActiveSection] = useState(0);
+  const [activeSection, setActiveSection]     = useState(0);
+
+  // ── Registration state ──
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [showRegModal, setShowRegModal] = useState(false);
+  const [clientData, setClientData]     = useState(null);
 
   const formRef = useRef(null);
 
@@ -42,16 +182,37 @@ export default function SellerForm() {
     return () => previews.forEach((url) => URL.revokeObjectURL(url));
   }, [previews]);
 
+  const requireRegistration = () => {
+    if (!isRegistered) {
+      setShowRegModal(true);
+      return true;
+    }
+    return false;
+  };
+
+  const handleRegistrationSuccess = (json) => {
+    setClientData(json);
+    setIsRegistered(true);
+    setShowRegModal(false);
+    setFields((prev) => ({
+      ...prev,
+      name:  json.client?.name     || prev.name,
+      email: json.client?.email    || prev.email,
+      phone: json.client?.mobileno || prev.phone,
+    }));
+  };
+
   const handleCountryChange = (e) => {
+    if (requireRegistration()) return;
     const code = e.target.value;
     setSelectedCountry(code);
-    setSelectedState("");
-    setSelectedCity("");
+    setSelectedState(""); setSelectedCity("");
     setStates(State.getStatesOfCountry(code));
     setCities([]);
   };
 
   const handleStateChange = (e) => {
+    if (requireRegistration()) return;
     const code = e.target.value;
     setSelectedState(code);
     setSelectedCity("");
@@ -59,11 +220,11 @@ export default function SellerForm() {
   };
 
   const handleImageChange = (e) => {
+    if (requireRegistration()) return;
     const newFiles = Array.from(e.target.files);
     previews.forEach((url) => URL.revokeObjectURL(url));
-    const newPreviews = newFiles.map((f) => URL.createObjectURL(f));
     setImgs(newFiles);
-    setPreviews(newPreviews);
+    setPreviews(newFiles.map((f) => URL.createObjectURL(f)));
   };
 
   const removeImage = (index) => {
@@ -73,6 +234,7 @@ export default function SellerForm() {
   };
 
   const detectLocation = () => {
+    if (requireRegistration()) return;
     if (!navigator.geolocation) { alert("Geolocation not supported."); return; }
     setLoadingLocation(true);
     navigator.geolocation.getCurrentPosition(
@@ -107,40 +269,24 @@ export default function SellerForm() {
     );
   };
 
-  /* ── Step 1: Upload images to /api/upload → get back full public URLs ── */
   const uploadImagesToServer = async () => {
     if (imgs.length === 0) return [];
-
     const fd = new FormData();
     imgs.forEach((file) => fd.append("images", file));
-
-    console.log("Uploading", imgs.length, "image(s) to /api/upload...");
-
-    const res = await fetch("/api/upload", { method: "POST", body: fd });
+    const res  = await fetch("/api/upload", { method: "POST", body: fd });
     const json = await res.json().catch(() => ({}));
-
-    console.log("Upload response:", res.status, json);
-
-    if (!res.ok) {
-      throw new Error(json.error || `Image upload failed (${res.status})`);
-    }
-
-    console.log("Image URLs received:", json.urls);
-    return json.urls; // full absolute URLs e.g. ["https://yourdomain.com/uploads/img.jpg"]
+    if (!res.ok) throw new Error(json.error || `Image upload failed (${res.status})`);
+    return json.urls;
   };
 
-  /* ── Step 2: Submit property with image URLs ── */
   const submit = async (e) => {
     e.preventDefault();
+    if (!isRegistered) { setShowRegModal(true); return; }
     setFormState({ loading: true, status: null, msg: "" });
-
     try {
-      // STEP 1: Upload images, get absolute URLs
-      console.log("STEP 1: Uploading images...");
-      const imageUrls = await uploadImagesToServer();
-      console.log("STEP 1 DONE ✅ imageUrls:", imageUrls);
-
+      const imageUrls         = await uploadImagesToServer();
       const selectedStateName = states.find((s) => s.isoCode === selectedState)?.name || selectedState || "";
+      const expectedPrice     = parseFloat(fields.price?.replace(/,/g, "") || 0);
 
       const payload = {
         fullname:      fields.name,
@@ -158,25 +304,21 @@ export default function SellerForm() {
         areaSize:      Number(fields.areaSize)  || 0,
         areaUnit:      fields.areaUnit,
         furnishedType: fields.furnishedType,
-        expectedPrice: parseFloat(fields.price?.replace(/,/g, "") || 0),
+        expectedPrice,
         adminPrice:    0,
-        finalPrice:    parseFloat(fields.price?.replace(/,/g, "") || 0),
+        finalPrice:    expectedPrice,
         Active:        "Active",
-        image:         imageUrls, // public URLs like ["/uploads/1234_photo.jpg"]
+        image:         imageUrls,
+        clientId:      clientData?.client?.id,
       };
 
-      console.log("STEP 2: Sending to API...", payload);
-
       const json = await createSellerProperty(payload);
-      console.log("STEP 2 DONE ✅", json);
-
       setFormState({
-        loading: false,
-        status:  "ok",
-        msg:     `Listed successfully! · Seller #${json.seller?.id ?? "—"}`,
+        loading: false, status: "ok",
+        msg: `Listed successfully! · Seller #${json.seller?.id ?? "—"} · Property #${json.property?.id ?? "—"}`,
       });
 
-      // Reset
+      // Reset form
       setFields({ name:"", phone:"", email:"", area:"", pincode:"", address:"", propertyType:"", furnishedType:"", bedrooms:"", bathrooms:"", areaSize:"", areaUnit:"", price:"", description:"" });
       previews.forEach((url) => URL.revokeObjectURL(url));
       setImgs([]); setPreviews([]);
@@ -185,13 +327,13 @@ export default function SellerForm() {
       setActiveSection(0);
 
     } catch (err) {
-      console.error("SUBMIT ERROR:", err);
-      setFormState({
-        loading: false,
-        status:  "err",
-        msg:     err?.message || "Something went wrong. Check console.",
-      });
+      setFormState({ loading: false, status: "err", msg: err?.message || "Something went wrong." });
     }
+  };
+
+  const setWithGuard = (key) => (e) => {
+    if (requireRegistration()) return;
+    setFields((prev) => ({ ...prev, [key]: e.target.value }));
   };
 
   const sections = [
@@ -203,6 +345,8 @@ export default function SellerForm() {
 
   return (
     <div style={S.page}>
+      {showRegModal && <RegisterModal onSuccess={handleRegistrationSuccess} />}
+
       <div style={S.bgGrid} aria-hidden="true" />
       <div style={S.container}>
 
@@ -210,11 +354,18 @@ export default function SellerForm() {
           <div style={S.pill}><span style={S.pillDot} />Property Listing Portal</div>
           <h1 style={S.h1}>List Your <span style={S.accent}>Property</span></h1>
           <p style={S.sub}>Complete the form below to publish your listing instantly</p>
+          {isRegistered && clientData && (
+            <div style={S.userBadge}>
+              <CheckCircle2 size={14} color="#15803d" />
+              <span>Registered as <strong>{clientData.client?.name}</strong></span>
+            </div>
+          )}
         </header>
 
         <nav style={S.nav} aria-label="Form sections">
           {sections.map((s, i) => (
-            <button key={i} type="button" onClick={() => setActiveSection(i)}
+            <button key={i} type="button"
+              onClick={() => { if (!requireRegistration()) setActiveSection(i); }}
               style={{ ...S.navBtn, ...(activeSection === i ? S.navBtnActive : {}) }}>
               {s.icon}<span>{s.label}</span>
               {activeSection === i && <span style={S.navPip} />}
@@ -223,47 +374,63 @@ export default function SellerForm() {
         </nav>
 
         <div style={S.card}>
+          {!isRegistered && (
+            <div style={S.regHint} onClick={() => setShowRegModal(true)}>
+              <UserPlus size={16} color="#c8a45a" />
+              <span>Click any field to register and start your listing</span>
+            </div>
+          )}
+
           <form ref={formRef} onSubmit={submit}>
 
             {/* ══ SECTION 0: Contact ══ */}
             <Section show={activeSection === 0} title="Contact Information">
               <Field label="Full Name" required>
-                <input style={S.input} placeholder="John Doe" value={fields.name} onChange={set("name")} required />
+                <input style={S.input} placeholder="John Doe" value={fields.name}
+                  onFocus={requireRegistration} onChange={setWithGuard("name")} required />
               </Field>
               <Field label="Phone Number" required>
-                <input style={S.input} placeholder="+91 98765 43210" value={fields.phone} onChange={set("phone")} required />
+                <input style={S.input} placeholder="+91 98765 43210" value={fields.phone}
+                  onFocus={requireRegistration} onChange={setWithGuard("phone")} required />
               </Field>
               <Field label="Email Address" span required>
-                <input style={S.input} type="email" placeholder="john@email.com" value={fields.email} onChange={set("email")} required />
+                <input style={S.input} type="email" placeholder="john@email.com" value={fields.email}
+                  onFocus={requireRegistration} onChange={setWithGuard("email")} required />
               </Field>
-              <NavFooter onNext={() => setActiveSection(1)} />
+              <NavFooter onNext={() => { if (!requireRegistration()) setActiveSection(1); }} />
             </Section>
 
             {/* ══ SECTION 1: Location ══ */}
             <Section show={activeSection === 1} title="Location Details">
               <Field label="Country">
-                <select style={S.input} value={selectedCountry} onChange={handleCountryChange}>
+                <select style={S.input} value={selectedCountry}
+                  onFocus={requireRegistration} onChange={handleCountryChange}>
                   {countries.map((c) => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
                 </select>
               </Field>
               <Field label="State">
-                <select style={S.input} value={selectedState} onChange={handleStateChange}>
+                <select style={S.input} value={selectedState}
+                  onFocus={requireRegistration} onChange={handleStateChange}>
                   <option value="">Select State</option>
                   {states.map((s) => <option key={s.isoCode} value={s.isoCode}>{s.name}</option>)}
                 </select>
               </Field>
               <Field label="City">
-                <select style={S.input} value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)}>
+                <select style={S.input} value={selectedCity}
+                  onFocus={requireRegistration}
+                  onChange={(e) => { if (!requireRegistration()) setSelectedCity(e.target.value); }}>
                   <option value="">Select City</option>
                   {cities.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
                 </select>
               </Field>
               <Field label="Area / Locality">
-                <input style={S.input} placeholder="Sector 17, MG Road…" value={fields.area} onChange={set("area")} />
+                <input style={S.input} placeholder="Sector 17, MG Road…" value={fields.area}
+                  onFocus={requireRegistration} onChange={setWithGuard("area")} />
               </Field>
               <Field label="Pincode">
                 <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                  <input style={{ ...S.input, paddingRight: 130 }} placeholder="110001" value={fields.pincode} onChange={set("pincode")} />
+                  <input style={{ ...S.input, paddingRight: 130 }} placeholder="110001" value={fields.pincode}
+                    onFocus={requireRegistration} onChange={setWithGuard("pincode")} />
                   <button type="button" onClick={detectLocation} disabled={loadingLocation} style={S.geoBtn}>
                     {loadingLocation ? <Loader2 size={12} style={{ animation: "spin .8s linear infinite" }} /> : "📍"}
                     {loadingLocation ? " Detecting…" : " Detect"}
@@ -271,62 +438,73 @@ export default function SellerForm() {
                 </div>
               </Field>
               <Field label="Full Address" span>
-                <textarea style={S.textarea} rows={2} placeholder="House No., Street, Landmark…" value={fields.address} onChange={set("address")} />
+                <textarea style={S.textarea} rows={2} placeholder="House No., Street, Landmark…" value={fields.address}
+                  onFocus={requireRegistration} onChange={setWithGuard("address")} />
               </Field>
-              <NavFooter onBack={() => setActiveSection(0)} onNext={() => setActiveSection(2)} />
+              <NavFooter onBack={() => setActiveSection(0)} onNext={() => { if (!requireRegistration()) setActiveSection(2); }} />
             </Section>
 
             {/* ══ SECTION 2: Property ══ */}
             <Section show={activeSection === 2} title="Property Details">
               <Field label="Property Type" required>
-                <select style={S.input} value={fields.propertyType} onChange={set("propertyType")} required>
+                <select style={S.input} value={fields.propertyType}
+                  onFocus={requireRegistration} onChange={setWithGuard("propertyType")} required>
                   <option value="">Select type</option>
                   {["Apartment","Villa","Plot","Commercial"].map((v) => <option key={v} value={v}>{v}</option>)}
                 </select>
               </Field>
               <Field label="Furnished Status">
-                <select style={S.input} value={fields.furnishedType} onChange={set("furnishedType")}>
+                <select style={S.input} value={fields.furnishedType}
+                  onFocus={requireRegistration} onChange={setWithGuard("furnishedType")}>
                   <option value="">Select status</option>
                   {["Furnished","Semi Furnished","Unfurnished"].map((v) => <option key={v} value={v}>{v}</option>)}
                 </select>
               </Field>
               <Field label="Bedrooms">
-                <input style={S.input} type="number" min="0" placeholder="3" value={fields.bedrooms} onChange={set("bedrooms")} />
+                <input style={S.input} type="number" min="0" placeholder="3" value={fields.bedrooms}
+                  onFocus={requireRegistration} onChange={setWithGuard("bedrooms")} />
               </Field>
               <Field label="Bathrooms">
-                <input style={S.input} type="number" min="0" placeholder="2" value={fields.bathrooms} onChange={set("bathrooms")} />
+                <input style={S.input} type="number" min="0" placeholder="2" value={fields.bathrooms}
+                  onFocus={requireRegistration} onChange={setWithGuard("bathrooms")} />
               </Field>
               <Field label="Area Size">
-                <input style={S.input} type="number" min="0" placeholder="1200" value={fields.areaSize} onChange={set("areaSize")} />
+                <input style={S.input} type="number" min="0" placeholder="1200" value={fields.areaSize}
+                  onFocus={requireRegistration} onChange={setWithGuard("areaSize")} />
               </Field>
               <Field label="Area Unit">
-                <select style={S.input} value={fields.areaUnit} onChange={set("areaUnit")}>
+                <select style={S.input} value={fields.areaUnit}
+                  onFocus={requireRegistration} onChange={setWithGuard("areaUnit")}>
                   <option value="">Select unit</option>
                   {["sqft","gaj","bigha","acre"].map((v) => <option key={v} value={v}>{v}</option>)}
                 </select>
               </Field>
-              <Field label="Expected Price (₹)" span required>
+              <Field label="Expected Price (₹)" required>
                 <div style={S.priceWrap}>
                   <span style={S.pricePrefix}>₹</span>
-                  <input style={{ ...S.input, paddingLeft: 36 }} placeholder="45,00,000" value={fields.price} onChange={set("price")} required />
+                  <input style={{ ...S.input, paddingLeft: 36 }} placeholder="45,00,000" value={fields.price}
+                    onFocus={requireRegistration} onChange={setWithGuard("price")} required />
                 </div>
               </Field>
-              <NavFooter onBack={() => setActiveSection(1)} onNext={() => setActiveSection(3)} />
+              <NavFooter onBack={() => setActiveSection(1)} onNext={() => { if (!requireRegistration()) setActiveSection(3); }} />
             </Section>
 
             {/* ══ SECTION 3: Media ══ */}
             <Section show={activeSection === 3} title="Description & Images">
               <Field label="Property Description" span>
-                <textarea style={{ ...S.textarea, minHeight: 100 }} rows={4} placeholder="Highlight key features, nearby schools, metro, amenities…" value={fields.description} onChange={set("description")} />
+                <textarea style={{ ...S.textarea, minHeight: 100 }} rows={4}
+                  placeholder="Highlight key features, nearby schools, metro, amenities…"
+                  value={fields.description}
+                  onFocus={requireRegistration} onChange={setWithGuard("description")} />
               </Field>
 
               <Field label="Property Images" span>
-                <label style={S.dropzone}>
-                  <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif" style={{ display: "none" }} onChange={handleImageChange} />
+                <label style={S.dropzone} onClick={(e) => { if (requireRegistration()) e.preventDefault(); }}>
+                  <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                    style={{ display: "none" }} onChange={handleImageChange} />
                   <ImagePlus size={28} color="#c8a45a" />
                   <strong style={{ marginTop: 8, color: "#1a1a2e" }}>Drop images here or click to browse</strong>
                   <span style={{ fontSize: 12, color: "#8e8fa8", marginTop: 4 }}>JPEG · PNG · WebP · Max 10 MB each</span>
-                  <span style={{ fontSize: 11, color: "#c8a45a", marginTop: 2 }}>Images sent directly to your API</span>
                 </label>
                 {imgs.length > 0 && (
                   <div style={S.previewGrid}>
@@ -419,11 +597,13 @@ const S = {
   h1: { fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(32px, 6vw, 54px)", fontWeight: 700, color: "#1a1a2e", letterSpacing: "-0.02em", lineHeight: 1.1, marginBottom: 12 },
   accent: { color: "#c8a45a", fontStyle: "italic" },
   sub: { color: "#6b6c80", fontSize: 14.5, lineHeight: 1.6 },
+  userBadge: { display: "inline-flex", alignItems: "center", gap: 7, marginTop: 12, padding: "6px 16px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 100, fontSize: 13, color: "#15803d" },
   nav: { display: "flex", background: "#fff", borderRadius: 18, padding: 6, marginBottom: 20, gap: 4, boxShadow: "0 2px 12px rgba(0,0,0,0.07)", border: "1px solid #e8e7e2" },
   navBtn: { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 8px", border: "none", borderRadius: 13, background: "transparent", color: "#9a9ab0", fontSize: 13, fontWeight: 500, fontFamily: "inherit", cursor: "pointer", position: "relative", transition: "all .2s" },
   navBtnActive: { background: "#1a1a2e", color: "#fff", fontWeight: 600, boxShadow: "0 4px 14px rgba(26,26,46,0.22)" },
   navPip: { position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)", width: 4, height: 4, borderRadius: "50%", background: "#c8a45a" },
-  card: { background: "#fff", border: "1px solid #e8e7e2", borderRadius: 28, padding: "40px 40px 36px", boxShadow: "0 20px 60px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.9) inset" },
+  card: { background: "#fff", border: "1px solid #e8e7e2", borderRadius: 28, padding: "40px 40px 36px", boxShadow: "0 20px 60px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.9) inset", position: "relative" },
+  regHint: { display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", background: "rgba(200,164,90,0.07)", border: "1px solid rgba(200,164,90,0.2)", borderRadius: 12, marginBottom: 20, fontSize: 13, color: "#9a7535", fontWeight: 500, cursor: "pointer" },
   sectionTitle: { display: "flex", alignItems: "center", gap: 14, marginBottom: 24 },
   sectionTitleText: { fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 700, color: "#1a1a2e", whiteSpace: "nowrap", letterSpacing: "-0.01em" },
   sectionLine: { flex: 1, height: 1, background: "linear-gradient(to right, #e8e7e2, transparent)" },

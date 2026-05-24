@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { submitBuyerEnquiry } from "../../servicesapi/buyerformapi";
 
 export default function PropertyDetailsPage() {
   const property = {
@@ -27,9 +28,24 @@ export default function PropertyDetailsPage() {
       facing: "Sea View",
       status: "Available",
     },
+
+    propertyId: "12",
   };
 
   const [currentImage, setCurrentImage] = useState(0);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    message: "",
+  });
+
+  // Submission state
+  const [submitting, setSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null); // 'success' | 'error'
+  const [errorMessage, setErrorMessage] = useState("");
 
   const nextSlide = () => {
     setCurrentImage((prev) =>
@@ -41,6 +57,29 @@ export default function PropertyDetailsPage() {
     setCurrentImage((prev) =>
       prev === 0 ? property.images.length - 1 : prev - 1
     );
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setSubmitStatus(null);
+    setErrorMessage("");
+
+    const result = await submitBuyerEnquiry(formData, property);
+
+    if (result.success) {
+      setSubmitStatus("success");
+      setFormData({ name: "", phone: "", email: "", message: "" });
+    } else {
+      setSubmitStatus("error");
+      setErrorMessage(result.error || "Something went wrong. Please try again.");
+    }
+
+    setSubmitting(false);
   };
 
   return (
@@ -61,7 +100,6 @@ export default function PropertyDetailsPage() {
             opacity: 0;
             transform: translateY(20px);
           }
-
           to {
             opacity: 1;
             transform: translateY(0);
@@ -81,7 +119,6 @@ export default function PropertyDetailsPage() {
             alt="Property"
             className="w-full h-full object-cover"
           />
-
           <div className="absolute inset-0 bg-black/40"></div>
 
           {/* CONTENT */}
@@ -90,16 +127,12 @@ export default function PropertyDetailsPage() {
               <p className="uppercase tracking-[4px] text-white text-sm mb-4">
                 Premium Property
               </p>
-
               <h1 className="text-5xl md:text-7xl text-white font-heading mb-5 leading-none">
                 {property.title}
               </h1>
-
               <div className="flex flex-wrap items-center gap-6">
                 <p className="text-white text-lg">{property.location}</p>
-
                 <div className="w-[1px] h-6 bg-white/40"></div>
-
                 <p className="text-2xl text-white font-semibold">
                   {property.price}
                 </p>
@@ -114,7 +147,6 @@ export default function PropertyDetailsPage() {
           >
             ←
           </button>
-
           <button
             onClick={nextSlide}
             className="absolute right-5 top-1/2 -translate-y-1/2 z-20 w-14 h-14 rounded-full bg-white/20 backdrop-blur-md text-white text-2xl hover:bg-white hover:text-black transition-all"
@@ -147,18 +179,16 @@ export default function PropertyDetailsPage() {
         {/* MAIN SECTION */}
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 py-20">
           <div className="grid lg:grid-cols-[1.7fr_0.9fr] gap-12">
-            {/* LEFT SIDE - PROPERTY DETAILS */}
+            {/* LEFT SIDE */}
             <div className="space-y-10 fade-up">
               {/* ABOUT */}
               <div className="bg-white rounded-[32px] p-8 border border-[#e5ded2]">
                 <p className="uppercase tracking-[4px] text-sm text-black mb-3">
                   About Property
                 </p>
-
                 <h2 className="text-5xl font-heading text-black mb-6">
                   Modern Luxury Living Experience
                 </h2>
-
                 <p className="text-black/70 leading-[2] text-lg">
                   {property.description}
                 </p>
@@ -169,7 +199,6 @@ export default function PropertyDetailsPage() {
                 <h3 className="text-4xl font-heading mb-8 text-black">
                   Property Details
                 </h3>
-
                 <div className="grid md:grid-cols-2 gap-6">
                   {Object.entries(property.details).map(([key, value]) => (
                     <div
@@ -179,10 +208,7 @@ export default function PropertyDetailsPage() {
                       <p className="text-sm uppercase tracking-[2px] text-black/50 mb-2">
                         {key}
                       </p>
-
-                      <p className="text-lg font-medium text-black">
-                        {value}
-                      </p>
+                      <p className="text-lg font-medium text-black">{value}</p>
                     </div>
                   ))}
                 </div>
@@ -193,7 +219,6 @@ export default function PropertyDetailsPage() {
                 <h3 className="text-4xl font-heading mb-8 text-black">
                   Features & Amenities
                 </h3>
-
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
                   {[
                     "Swimming Pool",
@@ -206,10 +231,7 @@ export default function PropertyDetailsPage() {
                     "Security System",
                     "Luxury Interiors",
                   ].map((feature, index) => (
-                    <div
-                      key={index}
-                      className="bg-[#f8f5ef] rounded-2xl p-5"
-                    >
+                    <div key={index} className="bg-[#f8f5ef] rounded-2xl p-5">
                       <p className="text-black font-medium">{feature}</p>
                     </div>
                   ))}
@@ -223,20 +245,40 @@ export default function PropertyDetailsPage() {
                 <h3 className="text-4xl font-heading text-black mb-2">
                   Interested?
                 </h3>
-
                 <p className="text-black/60 mb-8">
                   Fill the form and our agent will contact you shortly.
                 </p>
 
-                <form className="space-y-5">
+                {/* SUCCESS STATE */}
+                {submitStatus === "success" && (
+                  <div className="mb-6 p-5 rounded-2xl bg-green-50 border border-green-200 text-green-700">
+                    <p className="font-semibold mb-1">Enquiry Submitted! ✓</p>
+                    <p className="text-sm">
+                      Our agent will contact you soon.
+                    </p>
+                  </div>
+                )}
+
+                {/* ERROR STATE */}
+                {submitStatus === "error" && (
+                  <div className="mb-6 p-5 rounded-2xl bg-red-50 border border-red-200 text-red-600">
+                    <p className="font-semibold mb-1">Submission Failed</p>
+                    <p className="text-sm">{errorMessage}</p>
+                  </div>
+                )}
+
+                <div className="space-y-5">
                   <div>
                     <label className="text-sm text-black/70 mb-2 block">
                       Full Name
                     </label>
-
                     <input
                       type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
                       placeholder="Enter your name"
+                      required
                       className="w-full h-14 px-5 rounded-2xl border border-[#ddd] outline-none focus:border-black bg-[#fafafa]"
                     />
                   </div>
@@ -245,10 +287,13 @@ export default function PropertyDetailsPage() {
                     <label className="text-sm text-black/70 mb-2 block">
                       Phone Number
                     </label>
-
                     <input
-                      type="text"
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
                       placeholder="Enter phone number"
+                      required
                       className="w-full h-14 px-5 rounded-2xl border border-[#ddd] outline-none focus:border-black bg-[#fafafa]"
                     />
                   </div>
@@ -257,10 +302,13 @@ export default function PropertyDetailsPage() {
                     <label className="text-sm text-black/70 mb-2 block">
                       Email Address
                     </label>
-
                     <input
                       type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
                       placeholder="Enter email"
+                      required
                       className="w-full h-14 px-5 rounded-2xl border border-[#ddd] outline-none focus:border-black bg-[#fafafa]"
                     />
                   </div>
@@ -269,40 +317,66 @@ export default function PropertyDetailsPage() {
                     <label className="text-sm text-black/70 mb-2 block">
                       Message
                     </label>
-
                     <textarea
                       rows="5"
+                      name="message"
+                      value={formData.message}
+                      onChange={handleChange}
                       placeholder="I am interested in this property..."
                       className="w-full p-5 rounded-2xl border border-[#ddd] outline-none focus:border-black bg-[#fafafa] resize-none"
                     ></textarea>
                   </div>
 
-                  <button className="w-full h-14 rounded-2xl bg-black text-white text-sm font-medium hover:bg-[#2a2a2a] transition-all duration-300">
-                    Submit Enquiry
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={submitting}
+                    className="w-full h-14 rounded-2xl bg-black text-white text-sm font-medium hover:bg-[#2a2a2a] transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {submitting ? (
+                      <>
+                        <svg
+                          className="animate-spin h-4 w-4 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v8z"
+                          ></path>
+                        </svg>
+                        Submitting...
+                      </>
+                    ) : (
+                      "Submit Enquiry"
+                    )}
                   </button>
-                </form>
+                </div>
 
                 {/* QUICK INFO */}
                 <div className="mt-10 pt-8 border-t border-[#ece6da] space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-black/60">Price</span>
-
                     <span className="font-semibold text-black">
                       {property.price}
                     </span>
                   </div>
-
                   <div className="flex items-center justify-between">
                     <span className="text-black/60">Type</span>
-
-                    <span className="font-semibold text-black">
-                      Villa
-                    </span>
+                    <span className="font-semibold text-black">Villa</span>
                   </div>
-
                   <div className="flex items-center justify-between">
                     <span className="text-black/60">Status</span>
-
                     <span className="font-semibold text-green-600">
                       Available
                     </span>
