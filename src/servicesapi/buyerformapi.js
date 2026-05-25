@@ -1,5 +1,3 @@
-import api from "./baseurlapi";
-
 export async function submitBuyerEnquiry(formData, property) {
   const payload = {
     name: formData.name,
@@ -10,32 +8,32 @@ export async function submitBuyerEnquiry(formData, property) {
     propertyId: String(property.propertyId),
   };
 
-  console.log("📤 Payload:", payload);
-  console.log("📡 Base URL:", api.defaults.baseURL);
-
   try {
-    const response = await api.post("/buyers", payload);
-    console.log("✅ Success:", response.status, response.data);
-    return { success: true, data: response.data };
-  } catch (err) {
-    if (err.response) {
-      console.error("❌ Server Error:", err.response.status, err.response.data);
+    const response = await fetch("https://your-api-url.com/buyers", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
       return {
         success: false,
-        error:
-          err.response.data?.message ||
-          err.response.data?.error ||
-          `Server error: ${err.response.status}`,
+        error: data?.message || data?.error || `Server error: ${response.status}`,
       };
-    } else if (err.request) {
-      console.error("❌ No response (CORS/Network):", err.message);
+    }
+
+    return { success: true, data };
+  } catch (err) {
+    if (err instanceof TypeError && err.message.includes("fetch")) {
       return {
         success: false,
         error: "Server se response nahi aaya. Check console for details.",
       };
-    } else {
-      console.error("❌ Request error:", err.message);
-      return { success: false, error: err.message };
     }
+    return { success: false, error: err.message };
   }
 }
