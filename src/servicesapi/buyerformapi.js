@@ -1,11 +1,6 @@
 import api from "./baseurlapi";
 
 export async function submitBuyerEnquiry(formData, property) {
-      const response = await api.post(
-          "/buyers",
-          payload
-        );
-    
   const payload = {
     name: formData.name,
     email: formData.email,

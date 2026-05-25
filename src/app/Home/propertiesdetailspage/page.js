@@ -467,7 +467,7 @@ export default function PropertyDetailsPage() {
                   </div>
 
                   <div className="pdp-field">
-                    <label>Message</label>
+                    <label>Messagess</label>
                     <textarea
                       name="message"
                       className="pdp-textarea"

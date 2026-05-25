@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "https://property.concentics.com/api",
+  baseURL: "http://property.concentics.com/api", // Direct URL
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
