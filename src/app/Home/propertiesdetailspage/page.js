@@ -28,7 +28,7 @@ async function submitBuyerEnquiry(formData, property) {
 
   try {
     const response = await fetch(
-      "http://property.concentics.com/api/buyer-details-add",
+      "https://propertybackend.concentics.in/api/buyer-details-add",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
